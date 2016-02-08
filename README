@@ -1,7 +1,7 @@
 ＊　この手順は現在編集中です。
 ＊　このままでは動作しません。
 
-OpenBlocksファームウェア作成ガイド
+OpenBlocks IoT BX1/EX1ファームウェア作成ガイド
 
 ぷらっとホーム株式会社
 
@@ -9,40 +9,92 @@ Copyright (c) 2015 Plat'Home CO., LTD.
 
 1. はじめに
 
-このソフトウェアを使えばOpenBlocks IoT BX1のファームウェア
+このソフトウェアを使えばOpenBlocks IoT BX1/EX1のファームウェア
 を作成することができます。内容は、シェルスクリプトとファームウェアに
 含めるファイルです。
 
 2. 対応ファームウェア
 
+機種     | TARGET | DIST    |
+=========|========|=========|
+BX1/EX1  | obsbx1 | wheezy  |
+---------+--------+---------|
+
+項目TARGETとDISTは、ファームウェアを作成するときに実行するシェルスク
+リプトに指定する文字列です。後節で参照します。
+
 3. 準備
 
 3.1. 作成ホスト
 
-作成ホストのOSはUbuntu 14.04 amd64です。
+作成ホストのOSはDebian 7.9.0 amd64です。
 ホストを用意して、そのOSをインストールします。ホストは物理マシンと
 仮想マシンのどちらでもよろしいです。インターネットに接続できるよう、
 ネッワークの設定をしてください。
 
-3.2. Gitリポジトリの取得
+3.2. 開発環境の取得
 
-このソフトウェアはGitリポジトリから取得できます。
+開発環境をぷらっとホームのFTPサイトftp.plathome.co.jpからダウンロードします。
 
-作成ホストにgitパッケージをインストールします。
+ftp://ftp.plathome.co.jp/pub/BX1/wheezy/
 
-  # sudo apt-get update
-  # sudo apt-get install git
+使用するバージョンの source/debian_based_firmware-xxxx.tar.xz をダウンロード
+してください。
 
-Gitリポジトリを取得します。
+  # wget http://ftp.plathome.co.jp/pub/BX1/wheezy/3.10.17-13/source/debian_based_firmware-20151118.tar.xz
 
-  $ git clone git://github.com/plathome/bx1_firmware.git
+開発環境を適当なディレクトリに展開します。
 
-以下では、ディレクトリbx1_firmwareに移動したものとして説明します。
+  # tar Jxvf debian_based_firmware-20151118.tar.xz
 
 3.3. クロス開発環境
 
+Debian 7.9.0 amd64上でクロス開発環境を構築します。
+
+以下のパッケージをインストールします。
+
+  ＊　build-essantial
+  ＊　libncurses5-dev
+  ＊　debootstrap
+  ＊　gcc-multilib
+  ＊　bc
+
+  # apt-get install build-essential libncurses5-dev debootstrap gcc-multilib bc
+
+OpenBlocks IoT  BX1/EX1上で動作するプログラムを作成できるように、64bit PC上に
+32bit開発環境を構築します。
+
+  # dpkg --add-archtecture i386
+  # apt-get update
+
+hostapdを作成するのに必要なパッケージをインストールします。
+
+  # apt-get install libnl-dev:i386 libssl-dev:i386
+
+gcc4.8.2のソースファイルをダウンロードし、ビルドして使用してください。
+
+ビルド環境の設定
+
+  # apt-get install libmpfr-dev libgmp-dev libmpc-dev zip
+  # update-alternatives --install /usr/bin/gcc gcc /usr/bin/x86_64-linux-gnu-gcc-4.7 47
+ --slave /usr/bin/g++ g++ /usr/bin/x86_64-linux-gnu-g++-4.7
+  # update-alternatives --install /usr/bin/cc cc /usr/bin/gcc 47 --slave /usr/bin/c++ c++ /usr/bin/g++
+
+  # tar jxvf gcc-4.8.2.tar.bz2
+  # cd gcc-4.8.2
+  # ./configure
+  # make
+  # make install
+
+パスの設定
+  # update-alternatives --install /usr/bin/gcc gcc /usr/local/bin/x86_64-unknown-linux-gnu-gcc-4.8.2 48
+ --slave /usr/bin/g++ g++ /usr/local/bin/x86_64-unknown-linux-gnu-g++
+  # gcc --version
+  gcc (GCC) 4.8.2
 
 3.4. カーネルソース
+
+以降はdebian_based_firmware/に移動しての作業になります。
 
 3.4.1. 取得
 
@@ -51,12 +103,21 @@ Gitリポジトリを取得します。
 
 ftp://ftp.plathome.co.jp/pub/BX1/wheezy/
 
+  # wget http://ftp.plathome.co.jp/pub/BX1/wheezy/3.10.17-13/source/linux-3.10.17-obsiot-20151118.tar.xz
+
 3.4.2. 展開
 
+カーネルソースをsource/obsbx1/に展開します。
+
+  # cd source/obsbx1
+  # tar Jxvf linux-3.10.17-obsiot-20151118.tar.xz
+
 ディレクトリsourceには、TARGETをその名前としたディレクトリがあるので、
-そこにカーネルソースを展開してください。その結果、ディレクトリ
-source/TARGET/linux-KERNELが作成されます。TARGETとKERNELは、ご自身の
-文字列に置き換えてください。
+そこにカーネルソースを展開してください。
+ディレクトリsource/TARGET/linux-KERNELが作成されます。
+
+  # ls srouce/obsbx1
+  linux-3.10.17 linux-3.10.17.orig
 
 3.5. DVDイメージ
 
@@ -71,10 +132,6 @@ DIST=wheezyの場合、DebianのDVDイメージをDebianのミラーサイトか
 TARGET=obsbx1の場合
 debian-7.8.0-i386-DVD-1.iso
 
-3.6 その他必要なパッケージ
-その他必要パッケージをインストールします。
-  # sudo apt-get install build-essential libncurses5-dev debootstrap gcc-multilib
-
 4. 作成
 
 ファームウェアを作成します。シェルスクリプトbuild_ramdisk/buildall.sh
@@ -82,7 +139,7 @@ debian-7.8.0-i386-DVD-1.iso
 DIST=wheezyの場合、
 
   # cd build_ramdisk
-  # sudo ./buildall.sh -M obsbx1 -D wheezy
+  # ./buildall.sh -M obsbx1 -D wheezy
 
 と実行します。
 
@@ -90,12 +147,12 @@ DIST=wheezyの場合、
 release/TARGET/DIST/KERNEL-PATCHLEVELに置かれます。TARGET, DIST,
 KERNEL, PATCHLEVELは、ご自身の文字列に置き換えてください。
 
-例えば、ディレクトリrelease/obsbx1/wheezy/3.10.17-5には、以下のファイ
+例えば、ディレクトリrelease/obsbx1/wheezy/3.10.17-13には、以下のファイ
 ルが作成されます。
 
 o MD5.obsbx1: MD5チェックサムファイル
 o System.map: カーネルのシステムマップファイル
-o kernel-image-3.10.17-5-obsbx1.deb: コマンドdpkgなどでインストールするための
+o kernel-image-3.10.17-13-obsbx1.deb: コマンドdpkgなどでインストールするための
   パッケージ
 o ramdisk-wheezy.obsbx1.img.gz: ファームウェアのRAMディスクイメージ
 o bzImage: ファームウェアのカーネルイメージ
@@ -107,10 +164,10 @@ o bzImage: ファームウェアのカーネルイメージ
 シェルスクリプトbuild_ramdisk/buildall.shを実行することは、
 DIST=wheezy, TARGET=obsbx1の場合、以下の通り実行することと同じです。
 
-  # sudo DIST=wheezy TARGET=obsbx1 ./build_debootstrap.sh
-  # sudo DIST=wheezy TARGET=obsbx1 ./build_kernel.sh
-  # sudo DIST=wheezy TARGET=obsbx1 ./build_ramdisk.sh
-  # sudo DIST=wheezy TARGET=obsbx1 ./release_firmware.sh
+  # DIST=wheezy TARGET=obsbx1 ./build_debootstrap.sh
+  # DIST=wheezy TARGET=obsbx1 ./build_kernel.sh
+  # DIST=wheezy TARGET=obsbx1 ./build_ramdisk.sh
+  # DIST=wheezy TARGET=obsbx1 ./release_firmware.sh
 
 TARGETとDISTについては、予め次のように設定することで、毎回の指定は不要
 になります。
@@ -148,6 +205,17 @@ build_ramdisk/buildall.shを実行しておいてください。
 
 5.1.1. コンフィグレーションの変更
 
+カーネルのコンフィグレーション用のファイルを作成します。
+
+　# cp source/obsbx1/linux-3.10.17.org/arch/x86/configs/obsbx1_defconfig
+ source/obsbx1/linux-3.10.17.org/arch/x86/configs/obsbx1_defconfig.orig
+　# cd source/obsbx1/linux-3.10.17
+　# make obsbx1_defconfig
+
+カーネルのコンフィグレーションを変更します。
+
+　# make menuconfig
+　# cp .config source/arch/x86/configs/obsbx1_defconfig
 
 5.1.2. コンパイル
 
@@ -175,7 +243,7 @@ build_ramdisk/build_kernel.shを実行して、次節に進んでください。
 次のコマンドを実行してパッケージを追加します。DIST=wheezy,
 TARGET=obsbx1の場合、
 
-  # sudo DIST=wheezy TARGET=obsbx1 ./08_add_extra_packages.sh
+  # DIST=wheezy TARGET=obsbx1 ./08_add_extra_packages.sh
 
 と実行します。
 
@@ -189,13 +257,13 @@ rootfs/DIST_TARGET/var/lib/dpkg/statusで確認できます。TARGETとDISTは�
 ジを作成します。TARGETとDISTは、ご自身の文字列に置き換えてください。
 DIST=wheezy, TARGET=obsbx1の場合、
 
-  # sudo DIST=wheezy TARGET=obsbx1 ./99_create_ramdisk.sh
+  # DIST=wheezy TARGET=obsbx1 ./99_create_ramdisk.sh
 
 と実行します。
 
 ファームウェアを作成します。DIST=wheezy, TARGET=obsbx1の場合、
 
-  # sudo DIST=wheezy TARGET=obsbx1 ./release_firmware.sh
+  # DIST=wheezy TARGET=obsbx1 ./release_firmware.sh
 
 と実行します。
 
