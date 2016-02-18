@@ -56,13 +56,15 @@ Debian 7.9.0 amd64上でクロス開発環境を構築します。
   ＊　debootstrap
   ＊　gcc-multilib
   ＊　bc
+  ＊　qemu-user-static
+  ＊　libusb-dev:i386
 
-  # apt-get install build-essential libncurses5-dev debootstrap gcc-multilib bc
+  # apt-get install build-essential libncurses5-dev debootstrap gcc-multilib bc qemu-user-static libusb-dev:i386
 
 OpenBlocks IoT  BX1/EX1上で動作するプログラムを作成できるように、64bit PC上に
 32bit開発環境を構築します。
 
-  # dpkg --add-archtecture i386
+  # dpkg --add-architecture i386
   # apt-get update
 
 hostapdを作成するのに必要なパッケージをインストールします。
@@ -70,14 +72,15 @@ hostapdを作成するのに必要なパッケージをインストールしま�
   # apt-get install libnl-dev:i386 libssl-dev:i386
 
 gcc4.8.2のソースファイルをダウンロードし、ビルドして使用してください。
+gccのビルドには時間がかかるため、makeする際に適宜「-j」オプションをつけて実行してください。
 
 ビルド環境の設定
 
   # apt-get install libmpfr-dev libgmp-dev libmpc-dev zip
-  # update-alternatives --install /usr/bin/gcc gcc /usr/bin/x86_64-linux-gnu-gcc-4.7 47
- --slave /usr/bin/g++ g++ /usr/bin/x86_64-linux-gnu-g++-4.7
+  # update-alternatives --install /usr/bin/gcc gcc /usr/bin/x86_64-linux-gnu-gcc-4.7 47 --slave /usr/bin/g++ g++ /usr/bin/x86_64-linux-gnu-g++-4.7
   # update-alternatives --install /usr/bin/cc cc /usr/bin/gcc 47 --slave /usr/bin/c++ c++ /usr/bin/g++
 
+  # wget ftp://ftp.gnu.org/gnu/gcc/gcc-4.8.2/gcc-4.8.2.tar.bz2
   # tar jxvf gcc-4.8.2.tar.bz2
   # cd gcc-4.8.2
   # ./configure
@@ -85,8 +88,7 @@ gcc4.8.2のソースファイルをダウンロードし、ビルドして使用
   # make install
 
 パスの設定
-  # update-alternatives --install /usr/bin/gcc gcc /usr/local/bin/x86_64-unknown-linux-gnu-gcc-4.8.2 48
- --slave /usr/bin/g++ g++ /usr/local/bin/x86_64-unknown-linux-gnu-g++
+  # update-alternatives --install /usr/bin/gcc gcc /usr/local/bin/x86_64-unknown-linux-gnu-gcc-4.8.2 48 --slave /usr/bin/g++ g++ /usr/local/bin/x86_64-unknown-linux-gnu-g++
   # gcc --version
   gcc (GCC) 4.8.2
 
