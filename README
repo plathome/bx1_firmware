@@ -207,8 +207,8 @@ build_ramdisk/buildall.shを実行しておいてください。
 
 カーネルのコンフィグレーション用のファイルを作成します。
 
-　# cp source/obsbx1/linux-3.10.17.org/arch/x86/configs/obsbx1_defconfig
- source/obsbx1/linux-3.10.17.org/arch/x86/configs/obsbx1_defconfig.orig
+　# cp source/obsbx1/linux-3.10.17.orig/arch/x86/configs/obsbx1_defconfig
+ source/obsbx1/linux-3.10.17.orig/arch/x86/configs/obsbx1_defconfig.orig
 　# cd source/obsbx1/linux-3.10.17
 　# make obsbx1_defconfig
 
